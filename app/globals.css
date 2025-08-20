@@ -1,26 +1,43 @@
 @import "tailwindcss";
+@tailwind utilities;
 
+/* Optional: Apply default styles for dark mode using your theme colors */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-primary-black: #14181F;
+  --color-primary-green: #56FFA6;
+  --color-primary-grey-100: #2B303B;
+  --color-primary-grey-200: #202731;
+  --color-primary-grey-300: #C4D3ED;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Dark mode variables (if you want to adjust) */
+.dark {
+  --color-primary-black: #0f1218;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Accordion animations */
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+.accordion-down {
+  animation: accordion-down 0.2s ease-out;
+}
+
+.accordion-up {
+  animation: accordion-up 0.2s ease-out;
 }

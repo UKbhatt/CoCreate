@@ -1,10 +1,9 @@
-import { Room } from "./Room";
-import { CollaborativeApp } from "./CollaborativeApp";
+"use client";
+
+import dynamic from "next/dynamic";
+
+const App = dynamic(() => import("./App"), { ssr: false });
 
 export default function Page() {
-  return (
-    <Room>
-      <CollaborativeApp />
-    </Room>
-  );
+  return <App />;
 }

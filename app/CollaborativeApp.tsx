@@ -1,4 +1,5 @@
 "use client";
+import "./globals.css"
 
 import { useOthers } from "@liveblocks/react/suspense";
 

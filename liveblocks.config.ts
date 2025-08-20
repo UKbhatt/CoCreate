@@ -1,57 +1,84 @@
-// Define Liveblocks types for your application
-// https://liveblocks.io/docs/api-reference/liveblocks-react#Typing-your-data
+// liveblocks.config.ts
+import { createClient, LiveMap } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
 
+/** Presence broadcast (what changes in real time per user) */
+type Presence = {
+  cursor: { x: number; y: number } | null;
+  message?: string;
+};
 
-import { createClient } from "@liveblocks/client";
+/** Shared persistent storage in the room */
+type Storage = {
+  // Map<objectId, fabricJSON>
+  canvasObjects: LiveMap<string, any>;
+};
+
+/** Optional static user info (from your auth backend, if any) */
+type UserMeta = {
+  id?: string;
+  info?: { name?: string; avatar?: string };
+};
+
+/** Optional custom events */
+type RoomEvent =
+  | { type: "REACTION"; x: number; y: number; value: string }
+  | { type: "CHAT"; message: string };
+
+/** If you use Comments, thread metadata lives here */
+export type ThreadMetadata = {
+  resolved: boolean;
+  zIndex: number;
+  time?: number;
+  x: number;
+  y: number;
+};
 
 const client = createClient({
-  publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!
-  
+  publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
+  throttle: 16,
 });
-declare global {
-  interface Liveblocks {
-    // Each user's Presence, for useMyPresence, useOthers, etc.
-    Presence: {
-      // Example, real-time cursor coordinates
-      // cursor: { x: number; y: number };
-    };
 
-    // The Storage tree for the room, for useMutation, useStorage, etc.
-    Storage: {
-      // Example, a conflict-free list
-      // animals: LiveList<string>;
-    };
+/** Core Liveblocks hooks/context */
+const {
+  RoomProvider,
+  useRoom,
+  useMyPresence,
+  useUpdateMyPresence,
+  useSelf,
+  useOthers,
+  useOthersMapped,
+  useOthersConnectionIds,
+  useOther,
+  useStorage,
+  useHistory,
+  useUndo,
+  useRedo,
+  useCanUndo,
+  useCanRedo,
+  useMutation,
+  useStatus,
+  useLostConnectionListener,
+} = createRoomContext<Presence, Storage, UserMeta, RoomEvent, ThreadMetadata>(client);
 
-    // Custom user info set when authenticating with a secret key
-    UserMeta: {
-      id: string;
-      info: {
-        // Example properties, for useSelf, useUser, useOthers, etc.
-        // name: string;
-        // avatar: string;
-      };
-    };
-
-    // Custom events, for useBroadcastEvent, useEventListener
-    RoomEvent: {};
-      // Example has two events, using a union
-      // | { type: "PLAY" } 
-      // | { type: "REACTION"; emoji: "🔥" };
-
-    // Custom metadata set on threads, for useThreads, useCreateThread, etc.
-    ThreadMetadata: {
-      // Example, attaching coordinates to a thread
-      // x: number;
-      // y: number;
-    };
-
-    // Custom room info set with resolveRoomsInfo, for useRoomInfo
-    RoomInfo: {
-      // Example, rooms with a title and url
-      // title: string;
-      // url: string;
-    };
-  }
-}
-
-export {};
+export {
+  RoomProvider,
+  useRoom,
+  useMyPresence,
+  useUpdateMyPresence,
+  useSelf,
+  useOthers,
+  useOthersMapped,
+  useOthersConnectionIds,
+  useOther,
+  useStorage,
+  useHistory,
+  useUndo,
+  useRedo,
+  useCanUndo,
+  useCanRedo,
+  useMutation,
+  useStatus,
+  useLostConnectionListener,
+  LiveMap, 
+};
