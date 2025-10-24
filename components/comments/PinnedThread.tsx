@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import { ThreadData } from "@liveblocks/client";
-import { Thread } from "@liveblocks/react-ui";
+import { Thread } from "@liveblocks/react-comments";
 
 import { ThreadMetadata } from "@/liveblocks.config";
 
@@ -21,12 +21,6 @@ export const PinnedThread = ({ thread, onFocus, ...props }: Props) => {
 
   const [minimized, setMinimized] = useState(startMinimized);
 
-  /**
-   * memoize the result of this function so that it doesn't change on every render but only when the thread changes
-   * Memo is used to optimize performance and avoid unnecessary re-renders.
-   *
-   * useMemo: https://react.dev/reference/react/useMemo
-   */
 
   const memoizedContent = useMemo(
     () => (

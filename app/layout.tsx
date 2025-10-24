@@ -1,29 +1,30 @@
-// app/layout.tsx
-import type { Metadata } from "next";
-import { Geist, Work_Sans } from "next/font/google";
+import { Work_Sans } from "next/font/google";
+
 import "./globals.css";
-import { Room } from "./Room";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Work_Sans({ variable: "--font-work-sans", subsets: ["latin"], weight: ["400","600"] });
+import Room from "./Room";
 
-export const metadata: Metadata = {
+export const metadata = {
   title: "CoCreate",
-  description: "It is collaborative work space for building design for Web Apps , mobile Apps etc",
+  description:
+    "A minimalist Design platform using fabric.js and Liveblocks for realtime collaboration",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#242424]`}>
-        {/* Wrap everything that uses <Tooltip> inside exactly ONE provider */}
-        <TooltipProvider>
-          <Room>{children}</Room>
-        </TooltipProvider>
-      </body>
-    </html>
-  );
-}
+const workSans = Work_Sans({
+  subsets: ["latin"],
+  variable: "--font-work-sans",
+  weight: ["400", "600", "700"],
+});
+
+const RootLayout = ({ children }: { children: React.ReactNode }) => (
+  <html lang='en'>
+    <body className={`${workSans.className} bg-primary-grey-200`}>
+      <Room>
+        <TooltipProvider>{children}</TooltipProvider>
+      </Room>
+    </body>
+  </html>
+);
+
+export default RootLayout;

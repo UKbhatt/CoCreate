@@ -1,21 +1,22 @@
-// useMaxZIndex.ts
 import { useMemo } from "react";
-import { useThreads } from "@liveblocks/react/suspense"; // or "@/liveblocks.config"
 
-// Minimal shape we actually need
-type MinimalThread = { metadata?: { zIndex?: number } };
+import { useThreads } from "@/liveblocks.config";
 
+// Returns the highest z-index of all threads
 export const useMaxZIndex = () => {
-  // make threads always iterable + typed to our minimal shape
-  const { threads } = useThreads() as { threads?: MinimalThread[] };
-  const list = threads ?? [];
+  // get all threads
+  const { threads } = useThreads();
 
+  // calculate the max z-index
   return useMemo(() => {
     let max = 0;
-    for (const t of list) {
-      const z = Number(t?.metadata?.zIndex ?? 0);
-      if (z > max) max = z;
+    for (const thread of threads) {
+      // @ts-ignore
+      if (thread.metadata.zIndex > max) {
+        // @ts-ignore
+        max = thread.metadata.zIndex;
+      }
     }
     return max;
-  }, [list]);
+  }, [threads]);
 };

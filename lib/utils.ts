@@ -1,4 +1,4 @@
-import jsPDF from "jspdf" ; 
+import jsPDF from "jspdf";
 import { twMerge } from "tailwind-merge";
 import { type ClassValue, clsx } from "clsx";
 

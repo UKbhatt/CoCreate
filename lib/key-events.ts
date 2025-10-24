@@ -1,69 +1,83 @@
-import { Canvas, util, type FabricObject } from "fabric";
+import { fabric } from "fabric";
 import { v4 as uuidv4 } from "uuid";
 
-export type CustomFabricObject<T extends FabricObject = FabricObject> = T & {
-  objectId: string;
-};
+import { CustomFabricObject } from "@/types/type";
 
-export const handleCopy = (canvas: Canvas) => {
+export const handleCopy = (canvas: fabric.Canvas) => {
   const activeObjects = canvas.getActiveObjects();
   if (activeObjects.length > 0) {
-    const serialized = activeObjects.map((o) => o.toObject(["objectId"]));
-    localStorage.setItem("clipboard", JSON.stringify(serialized));
+    // Serialize the selected objects
+    const serializedObjects = activeObjects.map((obj) => obj.toObject());
+    // Store the serialized objects in the clipboard
+    localStorage.setItem("clipboard", JSON.stringify(serializedObjects));
   }
+
   return activeObjects;
 };
 
-export const handlePaste = async (
-  canvas: Canvas,
-  syncShapeInStorage: (shape: FabricObject) => void
+export const handlePaste = (
+  canvas: fabric.Canvas,
+  syncShapeInStorage: (shape: fabric.Object) => void
 ) => {
+  if (!canvas || !(canvas instanceof fabric.Canvas)) {
+    console.error("Invalid canvas object. Aborting paste operation.");
+    return;
+  }
+
+  // Retrieve serialized objects from the clipboard
   const clipboardData = localStorage.getItem("clipboard");
-  if (!clipboardData) return;
 
-  try {
-    const parsedObjects = JSON.parse(clipboardData) as unknown[];
+  if (clipboardData) {
+    try {
+      const parsedObjects = JSON.parse(clipboardData);
+      parsedObjects.forEach((objData: fabric.Object) => {
+        // convert the plain javascript objects retrieved from localStorage into fabricjs objects (deserialization)
+        fabric.util.enlivenObjects(
+          [objData],
+          (enlivenedObjects: fabric.Object[]) => {
+            enlivenedObjects.forEach((enlivenedObj) => {
+              // Offset the pasted objects to avoid overlap with existing objects
+              enlivenedObj.set({
+                left: enlivenedObj.left || 0 + 20,
+                top: enlivenedObj.top || 0 + 20,
+                objectId: uuidv4(),
+                fill: "#aabbcc",
+              } as CustomFabricObject<any>);
 
-    for (const objData of parsedObjects) {
-      const enlivened = await util.enlivenObjects([objData], {});
-      for (const obj of enlivened as unknown as FabricObject[]) {
-        obj.set({
-          left: (obj.left ?? 0) + 20,
-          top: (obj.top ?? 0) + 20,
-          objectId: uuidv4(),
-          ...(("fill" in (obj as any)) ? { fill: (obj as any).fill ?? "#aabbcc" } : {}),
-        } as Partial<CustomFabricObject> as any);
-
-        obj.setCoords();
-        canvas.add(obj);
-        syncShapeInStorage(obj);
-      }
+              canvas.add(enlivenedObj);
+              syncShapeInStorage(enlivenedObj);
+            });
+            canvas.renderAll();
+          },
+          "fabric"
+        );
+      });
+    } catch (error) {
+      console.error("Error parsing clipboard data:", error);
     }
-
-    canvas.renderAll();
-  } catch (err) {
-    console.error("Paste failed:", err);
   }
 };
 
 export const handleDelete = (
-  canvas: Canvas,
+  canvas: fabric.Canvas,
   deleteShapeFromStorage: (id: string) => void
 ) => {
   const activeObjects = canvas.getActiveObjects();
   if (!activeObjects || activeObjects.length === 0) return;
 
-  activeObjects.forEach((obj) => {
-    const o = obj as CustomFabricObject;
-    if (!o.objectId) return;
-    canvas.remove(o);
-    deleteShapeFromStorage(o.objectId);
-  });
+  if (activeObjects.length > 0) {
+    activeObjects.forEach((obj: CustomFabricObject<any>) => {
+      if (!obj.objectId) return;
+      canvas.remove(obj);
+      deleteShapeFromStorage(obj.objectId);
+    });
+  }
 
   canvas.discardActiveObject();
   canvas.requestRenderAll();
 };
 
+// create a handleKeyDown function that listen to different keydown events
 export const handleKeyDown = ({
   e,
   canvas,
@@ -73,47 +87,44 @@ export const handleKeyDown = ({
   deleteShapeFromStorage,
 }: {
   e: KeyboardEvent;
-  canvas: Canvas;
+  canvas: fabric.Canvas | any;
   undo: () => void;
   redo: () => void;
-  syncShapeInStorage: (shape: FabricObject) => void;
+  syncShapeInStorage: (shape: fabric.Object) => void;
   deleteShapeFromStorage: (id: string) => void;
 }) => {
-  const isMod = e.ctrlKey || e.metaKey;
+  // Check if the key pressed is ctrl/cmd + c (copy)
+  if ((e?.ctrlKey || e?.metaKey) && e.keyCode === 67) {
+    handleCopy(canvas);
+  }
 
-  switch (e.key.toLowerCase()) {
-    case "c": 
-      if (isMod) handleCopy(canvas);
-      break;
+  // Check if the key pressed is ctrl/cmd + v (paste)
+  if ((e?.ctrlKey || e?.metaKey) && e.keyCode === 86) {
+    handlePaste(canvas, syncShapeInStorage);
+  }
 
-    case "v": 
-      if (isMod) void handlePaste(canvas, syncShapeInStorage);
-      break;
+  // Check if the key pressed is delete/backspace (delete)
+  // if (e.keyCode === 8 || e.keyCode === 46) {
+  //   handleDelete(canvas, deleteShapeFromStorage);
+  // }
 
-    case "x": 
-      if (isMod) {
-        handleCopy(canvas);
-        handleDelete(canvas, deleteShapeFromStorage);
-      }
-      break;
+  // check if the key pressed is ctrl/cmd + x (cut)
+  if ((e?.ctrlKey || e?.metaKey) && e.keyCode === 88) {
+    handleCopy(canvas);
+    handleDelete(canvas, deleteShapeFromStorage);
+  }
 
-    case "z":
-      if (isMod) undo();
-      break;
+  // check if the key pressed is ctrl/cmd + z (undo)
+  if ((e?.ctrlKey || e?.metaKey) && e.keyCode === 90) {
+    undo();
+  }
 
-    case "y": 
-      if (isMod) redo();
-      break;
+  // check if the key pressed is ctrl/cmd + y (redo)
+  if ((e?.ctrlKey || e?.metaKey) && e.keyCode === 89) {
+    redo();
+  }
 
-    case "/": 
-      if (!e.shiftKey) {
-        e.preventDefault();
-      }
-      break;
-
-    case "delete":
-    case "backspace":
-      handleDelete(canvas, deleteShapeFromStorage);
-      break;
+  if (e.keyCode === 191 && !e.shiftKey) {
+    e.preventDefault();
   }
 };

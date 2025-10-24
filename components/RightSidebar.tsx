@@ -1,5 +1,5 @@
 import React, { useMemo, useRef } from "react";
-import { Canvas } from "fabric";
+
 import { RightSidebarProps } from "@/types/type";
 import { bringElement, modifyShape } from "@/lib/shapes";
 
@@ -25,7 +25,7 @@ const RightSidebar = ({
     setElementAttributes((prev) => ({ ...prev, [property]: value }));
 
     modifyShape({
-      canvas: fabricRef.current as Canvas,
+      canvas: fabricRef.current as fabric.Canvas,
       property,
       value,
       activeObjectRef,
